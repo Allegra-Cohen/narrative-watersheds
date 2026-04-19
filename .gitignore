@@ -1,0 +1,27 @@
+# Runtime data — uploaded files, persisted landscape state, embeddings, view.
+# Regenerable by re-uploading + re-clustering, but keeps user content out of git.
+data/
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.venv/
+venv/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Editors
+.vscode/
+.idea/
+
+# Env / secrets
+.env
+.env.*
+!.env.example
+
+# Logs
+*.log

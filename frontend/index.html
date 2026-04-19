@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Narrative Watersheds</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <main class="map-area">
+        <div class="doc-popup-backdrop" id="doc-popup-backdrop" hidden>
+            <div class="doc-popup" id="doc-popup" role="dialog" aria-modal="true">
+                <header class="doc-popup-header">
+                    <div class="doc-popup-titles">
+                        <h2 class="doc-popup-title"></h2>
+                        <p class="doc-popup-meta"></p>
+                    </div>
+                    <button class="doc-popup-close" id="doc-popup-close" title="Close (Esc)">×</button>
+                </header>
+                <div class="doc-popup-body">
+                    <pre class="doc-popup-text"></pre>
+                </div>
+            </div>
+        </div>
+        <svg class="map-canvas" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+                <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
+                    <circle cx="1" cy="1" r="1" fill="#947450" fill-opacity="0.35" />
+                </pattern>
+            </defs>
+            <rect width="100%" height="100%" fill="url(#grid)" />
+        </svg>
+        <div class="stage-toggle">
+            <button class="stage-btn active" data-view="theirs">Their world</button>
+            <button class="stage-btn" data-view="yours" disabled>Your world</button>
+        </div>
+    </main>
+
+    <div class="resize-handle" id="resize-handle" title="Drag to resize"></div>
+
+    <aside class="side-column">
+        <section class="panel documents-panel">
+            <header class="panel-header">
+                <span class="panel-title">DOCUMENTS</span>
+                <div class="panel-actions">
+                    <button class="panel-action" id="upload-files-btn" title="Upload files">+ files</button>
+                    <button class="panel-action" id="upload-folder-btn" title="Upload folder">+ folder</button>
+                </div>
+            </header>
+            <div class="panel-body">
+                <div class="docs-list" id="docs-list">
+                    <p class="empty-state">No documents yet.</p>
+                </div>
+            </div>
+            <input type="file" id="files-input" multiple hidden
+                   accept=".pdf,.html,.htm,.md,.markdown,.txt">
+            <input type="file" id="folder-input" webkitdirectory directory multiple hidden>
+        </section>
+
+        <section class="panel essay-panel">
+            <header class="panel-header">
+                <span class="panel-title">ESSAY</span>
+            </header>
+            <div class="panel-body">
+                <textarea class="essay-editor" placeholder="# Working title&#10;&#10;Start writing…"></textarea>
+            </div>
+        </section>
+
+        <section class="panel chat-panel">
+            <header class="panel-header">
+                <span class="panel-title">CHAT</span>
+            </header>
+            <div class="panel-body">
+                <div class="chat-log">
+                    <p class="empty-state">Ask the Scribe a question.</p>
+                </div>
+                <div class="chat-input-row">
+                    <input type="text" class="chat-input" placeholder="Message the Scribe…">
+                </div>
+            </div>
+        </section>
+    </aside>
+
+    <script src="https://cdn.jsdelivr.net/npm/d3-delaunay@6"></script>
+    <script src="app.js"></script>
+    <script src="map.js"></script>
+</body>
+</html>
