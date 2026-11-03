@@ -62,15 +62,25 @@ class Clusterer(Protocol):
 
 
 class HDBSCANClusterer:
+    """HDBSCAN with a hard/soft membership toggle.
+
+    mode="hard": each doc gets exactly one cluster (or none, if HDBSCAN labels it noise).
+    mode="soft": each doc gets a probability across clusters (filtered by min_membership).
+    """
+
     def __init__(
         self,
         min_cluster_size: int = 2,
         min_membership: float = 0.05,
         cluster_selection_method: str = "leaf",
+        mode: str = "hard",
     ):
+        if mode not in ("hard", "soft"):
+            raise ValueError(f"unknown HDBSCANClusterer mode: {mode}")
         self.min_cluster_size = min_cluster_size
         self.min_membership = min_membership
         self.cluster_selection_method = cluster_selection_method
+        self.mode = mode
 
     def cluster(self, embeddings: dict[str, list[float]]) -> dict[str, dict[int, float]]:
         import hdbscan
@@ -86,6 +96,19 @@ class HDBSCANClusterer:
         )
         clusterer.fit(X)
 
+        if self.mode == "hard":
+            return self._hard_assignments(ids, clusterer)
+        return self._soft_assignments(ids, clusterer)
+
+    def _hard_assignments(self, ids, clusterer) -> dict[str, dict[int, float]]:
+        result: dict[str, dict[int, float]] = {}
+        for i, doc_id in enumerate(ids):
+            label = int(clusterer.labels_[i])
+            result[doc_id] = {label: 1.0} if label >= 0 else {}
+        return result
+
+    def _soft_assignments(self, ids, clusterer) -> dict[str, dict[int, float]]:
+        import hdbscan
         try:
             soft = hdbscan.all_points_membership_vectors(clusterer)
         except Exception:
@@ -169,7 +192,9 @@ def run_clustering(
     docs = list(landscape.documents.values())
 
     # 1. Summarize any docs that need it
-    needs_summary = [d for d in docs if not d.summary or d.summary_input != build_summary_input(d)]
+    # Use summary_input as the sole cache key — empty summaries from "no substantive
+    # content" docs are valid cached results and shouldn't trigger re-summarization.
+    needs_summary = [d for d in docs if d.summary_input != build_summary_input(d)]
     if needs_summary:
         print(f"[cluster] summarizing {len(needs_summary)} docs...")
         for i, doc in enumerate(needs_summary, 1):

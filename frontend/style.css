@@ -70,6 +70,335 @@ body.resizing * {
     display: block;
 }
 
+.landmark-palette {
+    position: absolute;
+    top: 16px;
+    left: 16px;
+    display: flex;
+    flex-direction: row;
+    gap: 4px;
+    background: rgba(255, 250, 240, 0.85);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 4px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
+    z-index: 20;
+}
+
+.palette-btn {
+    width: 36px;
+    height: 36px;
+    background: transparent;
+    border: 1px solid transparent;
+    border-radius: 4px;
+    cursor: pointer;
+    color: #5a4632;
+    padding: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.1s, border-color 0.1s;
+}
+
+.palette-btn:hover {
+    background: rgba(196, 161, 122, 0.25);
+}
+
+.palette-btn.active {
+    background: var(--color-dark);
+    color: #f4ecdf;
+    border-color: var(--color-dark);
+}
+
+.palette-btn svg {
+    width: 100%;
+    height: 100%;
+}
+
+body.placing-landmark .map-canvas {
+    cursor: crosshair;
+}
+
+.landmark-icon {
+    cursor: pointer;
+    color: #3a2f22;
+    transition: opacity 0.1s;
+}
+
+.landmark-icon:hover {
+    opacity: 0.7;
+}
+
+.landmark-icon.pending {
+    opacity: 0.55;
+}
+
+.landmark-icon.pending path,
+.landmark-icon.pending circle:not([fill="transparent"]) {
+    stroke-dasharray: 3 2;
+}
+
+.path-line {
+    pointer-events: none;
+}
+
+/* Drainage streams (doc → collection point) are hidden by default; the
+   renderer toggles .drainage-visible on mouseover of the owning splotch. */
+.drainage-stream {
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.15s ease-in-out;
+}
+
+.drainage-stream.drainage-visible {
+    opacity: 0.65;
+}
+
+.moved-region-splotch {
+    cursor: default;
+}
+
+.doc-source-label {
+    font-family: var(--font-sans);
+    font-size: 11px;
+    fill: #3a2f22;
+    pointer-events: none;
+    user-select: none;
+}
+
+/* Region name label — Tolkien-style old-map font (IM Fell English SC). */
+.region-label {
+    font-family: 'IM Fell English SC', 'Cinzel', 'Cormorant Garamond', serif;
+    font-size: 15px;
+    fill: #3a2f22;
+    letter-spacing: 1.4px;
+    pointer-events: none;
+    user-select: none;
+}
+
+/* ---- Path-view entry animations ----
+   Timeline:
+     0.0s – 2.5s  doc dots slide from world position to path position
+     2.5s – 5.5s  river draws in (stroke-dashoffset)
+     5.5s – 6.3s  region + landmark splotches fade in
+     6.3s – 7.1s  tributaries fade/draw in
+     7.1s – 7.5s  flags fade in
+   Each dot carries --world-dx/--world-dy custom properties set inline —
+   the doc-travel keyframe translates from that offset back to (0,0). */
+
+@keyframes path-fade-in {
+    from { opacity: 0; }
+    to   { opacity: 1; }
+}
+
+@keyframes doc-travel {
+    from { transform: translate(var(--world-dx, 0px), var(--world-dy, 0px)); }
+    to   { transform: translate(0, 0); }
+}
+
+@keyframes river-draw {
+    from { stroke-dashoffset: 4000; }
+    to   { stroke-dashoffset: 0; }
+}
+
+.path-anim-doc-travel {
+    animation: doc-travel 2.5s cubic-bezier(0.4, 0, 0.2, 1) 0s both;
+}
+
+.path-anim-river {
+    stroke-dasharray: 4000;
+    stroke-dashoffset: 4000;
+    animation: river-draw 3s ease-out 2.5s both;
+}
+
+.path-anim-splotch {
+    animation: path-fade-in 0.8s ease-out 5.5s both;
+}
+
+.path-anim-landmark {
+    animation: path-fade-in 0.8s ease-out 5.5s both;
+}
+
+.path-anim-tributary {
+    animation: path-fade-in 0.8s ease-out 6.3s both;
+}
+
+.path-anim-flag {
+    animation: path-fade-in 0.4s ease-out 7.1s both;
+}
+
+.path-flag {
+    cursor: pointer;
+}
+
+.path-flag .pole {
+    stroke: #3a2f22;
+    stroke-width: 1.4;
+}
+
+.path-flag .banner {
+    fill: #b85b5b;
+    stroke: #3a2f22;
+    stroke-width: 1;
+}
+
+.path-flag .step-num {
+    fill: #faf6ec;
+    font-size: 9px;
+    font-family: var(--font-mono);
+    text-anchor: middle;
+    dominant-baseline: central;
+    pointer-events: none;
+}
+
+.landmark-popup-backdrop {
+    position: absolute;
+    inset: 0;
+    background: rgba(60, 45, 30, 0.25);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 100;
+    padding: 32px;
+}
+
+.landmark-popup-backdrop[hidden] {
+    display: none;
+}
+
+.landmark-popup {
+    background: #faf6ec;
+    color: #2a2724;
+    width: min(480px, 100%);
+    max-height: 100%;
+    border-radius: 6px;
+    box-shadow: 0 18px 50px rgba(0, 0, 0, 0.3);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.landmark-popup-header {
+    padding: 14px 18px;
+    border-bottom: 1px solid #d8d2c4;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-shrink: 0;
+}
+
+.landmark-popup-icon {
+    width: 32px;
+    height: 32px;
+    color: #5a4632;
+}
+
+.landmark-popup-icon svg {
+    width: 100%;
+    height: 100%;
+}
+
+.landmark-popup-body {
+    padding: 14px 18px;
+    flex: 1;
+    overflow: auto;
+    display: flex;
+    flex-direction: column;
+}
+
+.landmark-thoughts {
+    width: 100%;
+    min-height: 160px;
+    background: #f4ecdf;
+    color: #2a2724;
+    border: 1px solid #d8d2c4;
+    border-radius: 4px;
+    padding: 10px 12px;
+    font-family: var(--font-sans);
+    font-size: 13px;
+    line-height: 1.5;
+    resize: vertical;
+    outline: none;
+}
+
+.landmark-thoughts:focus {
+    border-color: var(--color-dark);
+}
+
+.landmark-popup-footer {
+    padding: 10px 18px;
+    border-top: 1px solid #d8d2c4;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-shrink: 0;
+}
+
+.landmark-delete-btn {
+    background: transparent;
+    border: 1px solid #b85b5b;
+    color: #b85b5b;
+    padding: 5px 12px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 12px;
+}
+
+.landmark-delete-btn:hover {
+    background: #b85b5b;
+    color: #faf6ec;
+}
+
+.landmark-confirm-btn {
+    background: transparent;
+    border: 1px solid #5a8a3a;
+    color: #5a8a3a;
+    padding: 5px 12px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 12px;
+}
+
+.landmark-confirm-btn:hover {
+    background: #5a8a3a;
+    color: #faf6ec;
+}
+
+.landmark-save-status {
+    font-size: 11px;
+    color: #8a8478;
+    font-style: italic;
+}
+
+.map-tooltip {
+    position: absolute;
+    pointer-events: none;
+    background: rgba(31, 27, 22, 0.92);
+    color: #f4ecdf;
+    padding: 5px 9px;
+    border-radius: 4px;
+    font-size: 12px;
+    font-family: var(--font-sans);
+    line-height: 1.35;
+    max-width: 320px;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+    z-index: 50;
+    white-space: pre-line;
+}
+
+.map-tooltip[hidden] {
+    display: none;
+}
+
+.doc-dot {
+    cursor: pointer;
+    transition: r 0.1s;
+}
+
+.doc-dot:hover {
+    r: 6;
+}
+
 .stage-toggle {
     position: absolute;
     bottom: 16px;
@@ -115,7 +444,7 @@ body.resizing * {
     background: var(--bg-panel);
     border-left: 1px solid var(--border);
     display: grid;
-    grid-template-rows: 1fr 1.6fr 1fr;
+    grid-template-rows: 1fr 2fr;
     overflow: hidden;
 }
 
@@ -344,36 +673,3 @@ body.resizing * {
     color: var(--fg-muted);
 }
 
-/* ---- Chat panel ---- */
-
-.chat-panel .panel-body {
-    padding: 0;
-}
-
-.chat-log {
-    flex: 1;
-    overflow: auto;
-    padding: 10px 12px;
-}
-
-.chat-input-row {
-    border-top: 1px solid var(--border);
-    padding: 8px;
-    flex-shrink: 0;
-}
-
-.chat-input {
-    width: 100%;
-    background: var(--bg-panel-header);
-    color: var(--fg-panel);
-    border: 1px solid var(--border);
-    border-radius: 4px;
-    padding: 6px 8px;
-    font-family: var(--font-sans);
-    font-size: 13px;
-    outline: none;
-}
-
-.chat-input:focus {
-    border-color: var(--accent);
-}
